@@ -35,6 +35,26 @@ export const summarizePDF = async (text: string): Promise<string> => {
   }
 };
 
+export const chatWithPDF = async (contextText: string, userQuestion: string): Promise<string> => {
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `You are a helpful PDF assistant. 
+      
+      Context from PDF:
+      ${contextText.substring(0, 10000)}
+      
+      User Question: ${userQuestion}
+      
+      Answer the user's question concisely based ONLY on the provided context.`
+    });
+    return response.text || "I couldn't find an answer in the document.";
+  } catch (error) {
+    console.error("Chat Error:", error);
+    return "Chat service temporarily unavailable.";
+  }
+};
+
 export const detectFormFields = async (base64Image: string): Promise<any[]> => {
   try {
     const response = await ai.models.generateContent({

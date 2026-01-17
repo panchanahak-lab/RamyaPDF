@@ -55,7 +55,8 @@ import {
   X,
   Check,
   Cookie,
-  Shield
+  Shield,
+  FilePlus
 } from 'lucide-react';
 import { User, UserFile } from './types';
 
@@ -156,6 +157,7 @@ const App: React.FC = () => {
     {
       name: "Edit & Sign",
       tools: [
+        { name: "Create PDF", icon: FilePlus, color: "bg-purple-500", desc: "Start a new document." },
         { name: "Edit", icon: FileEdit, color: "bg-purple-500", desc: "Modify text and images." },
         { name: "Fill & Sign", icon: PenTool, color: "bg-purple-600", desc: "Complete and sign docs." },
         { name: "Create Forms", icon: MousePointer2, color: "bg-purple-400", desc: "Build interactive PDF forms." },
@@ -173,6 +175,8 @@ const App: React.FC = () => {
         { name: "PDF to Text", icon: Type, color: "bg-slate-600", desc: "Extract raw plain text." },
         { name: "Word to PDF", icon: FileText, color: "bg-blue-400", desc: "Convert docx to PDF." },
         { name: "JPG to PDF", icon: Image, color: "bg-amber-400", desc: "Images to document." },
+        { name: "Excel to PDF", icon: Table, color: "bg-emerald-500", desc: "Convert spreadsheets to PDF." },
+        { name: "Text to PDF", icon: Type, color: "bg-slate-700", desc: "Convert plain text to PDF." },
       ]
     },
     {

@@ -35,7 +35,8 @@ import {
   Scaling,
   MousePointer2,
   Trash2,
-  Maximize2
+  Maximize2,
+  FilePlus
 } from 'lucide-react';
 import { User as UserType } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -83,6 +84,7 @@ const Header: React.FC<HeaderProps> = ({ user, theme, onToggleTheme, onOpenAuth,
     {
       title: "EDIT & SIGN",
       items: [
+        { name: "Create PDF", icon: FilePlus, color: "text-purple-500" },
         { name: "Edit", icon: FileEdit, color: "text-purple-500" },
         { name: "Fill & Sign", icon: PenTool, color: "text-purple-600" },
         { name: "Create Forms", icon: MousePointer2, color: "text-purple-400" },
@@ -105,6 +107,15 @@ const Header: React.FC<HeaderProps> = ({ user, theme, onToggleTheme, onOpenAuth,
         { name: "PDF to JPG", icon: Image, color: "text-amber-500" },
         { name: "PDF to Word", icon: FileText, color: "text-blue-500" },
         { name: "PDF to Text", icon: Type, color: "text-slate-500" }
+      ]
+    },
+    {
+      title: "CONVERT TO PDF",
+      items: [
+        { name: "Word to PDF", icon: FileText, color: "text-blue-400" },
+        { name: "JPG to PDF", icon: Image, color: "text-amber-400" },
+        { name: "Excel to PDF", icon: Table, color: "text-green-500" },
+        { name: "Text to PDF", icon: Type, color: "text-slate-700" }
       ]
     },
     {
