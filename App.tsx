@@ -6,15 +6,15 @@ import PDFEditor from './components/PDFEditor';
 import CookieConsent from './components/CookieConsent';
 import { TermsOfService, PrivacyPolicy, Disclaimer, SecurityCompliance } from './components/LegalContent';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FileEdit, 
-  FileArchive, 
-  Files, 
-  Scissors, 
-  Type, 
-  ShieldCheck, 
-  PenTool, 
-  Image, 
+import {
+  FileEdit,
+  FileArchive,
+  Files,
+  Scissors,
+  Type,
+  ShieldCheck,
+  PenTool,
+  Image,
   FileText,
   Cloud,
   Clock,
@@ -118,7 +118,7 @@ const App: React.FC = () => {
   const handleAuth = () => {
     // In a real app, validation would occur here.
     // For demo purposes, we proceed if manual consent is checked or if coming from social buttons (implicit)
-    
+
     setUser({
       id: '1',
       name: 'Sarah Connor',
@@ -187,7 +187,6 @@ const App: React.FC = () => {
         { name: "Resize", icon: Scaling, color: "bg-pink-300", desc: "Change page dimensions." },
         { name: "Watermark", icon: Stamp, color: "bg-slate-500", desc: "Add logo or text stamp." },
         { name: "Bates Numbering", icon: Binary, color: "bg-pink-500", desc: "Index for legal docs." },
-        { name: "OCR", icon: ScanText, color: "bg-indigo-500", desc: "Make scans searchable." },
       ]
     }
   ];
@@ -200,19 +199,19 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950 transition-colors duration-700 overflow-x-hidden selection:bg-red-500 selection:text-white">
-      <Header 
-        user={user} 
+      <Header
+        user={user}
         theme={theme}
         onToggleTheme={toggleTheme}
-        onOpenAuth={() => setIsAuthModalOpen(true)} 
-        onNavigate={(v) => setView(v as AppView)} 
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onNavigate={(v) => setView(v as AppView)}
         onToolClick={handleToolClick}
       />
 
       <main className="flex-1 z-10">
         <AnimatePresence mode="wait">
           {view === 'home' && (
-            <motion.div 
+            <motion.div
               key="home"
               variants={pageVariants}
               initial="initial"
@@ -224,23 +223,23 @@ const App: React.FC = () => {
                 <div className="inline-flex items-center gap-2 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 border border-red-100 dark:border-red-900/20">
                   <CheckCircle className="w-3 h-3" /> Free Forever
                 </div>
-                
+
                 <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 dark:text-white mb-6 leading-tight tracking-tight">
                   100% Free PDF Editor. <br className="hidden md:block" />
                   <span className="text-red-600 relative inline-block">
                     Sign Up for Free Access.
                     <svg className="absolute w-full h-3 -bottom-1 left-0 text-red-200 dark:text-red-900/30 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
-                       <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
+                      <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
                     </svg>
                   </span>
                 </h1>
-                
+
                 <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 font-medium mb-10 max-w-2xl mx-auto leading-relaxed">
                   Edit, merge, and sign documents in seconds. No watermarks, no hidden fees—just powerful PDF tools ready when you are.
                 </p>
 
                 <div className="flex flex-col items-center gap-6">
-                  <button 
+                  <button
                     onClick={() => handleToolClick('Edit')}
                     className="bg-red-600 hover:bg-red-700 text-white text-lg md:text-xl font-bold py-4 px-10 rounded-2xl shadow-xl shadow-red-600/20 transition-all hover:scale-105 hover:-translate-y-1 flex items-center gap-3"
                   >
@@ -266,7 +265,7 @@ const App: React.FC = () => {
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                         {category.tools.map((tool) => (
-                          <ToolCard 
+                          <ToolCard
                             key={tool.name}
                             title={tool.name}
                             description={tool.desc}
@@ -305,7 +304,7 @@ const App: React.FC = () => {
           )}
 
           {view === 'dashboard' && (
-            <motion.div 
+            <motion.div
               key="dashboard"
               variants={pageVariants}
               initial="initial"
@@ -380,7 +379,7 @@ const App: React.FC = () => {
               </div>
               <p className="text-sm leading-relaxed">Secure, efficient, and AI-powered document tools for professionals across India and the globe.</p>
             </div>
-            
+
             <div className="space-y-4">
               <h4 className="text-white font-bold uppercase text-[10px] tracking-widest">Solutions</h4>
               <ul className="text-sm space-y-2">
@@ -412,16 +411,16 @@ const App: React.FC = () => {
       </footer>
 
       {activeEditorFile && activeTool && (
-        <PDFEditor 
-          fileName={activeEditorFile} 
+        <PDFEditor
+          fileName={activeEditorFile}
           tool={activeTool}
-          onClose={closeEditor} 
+          onClose={closeEditor}
         />
       )}
 
       {/* Global Cookie Consent System */}
-      <CookieConsent 
-        onNavigate={(viewName) => setView(viewName)} 
+      <CookieConsent
+        onNavigate={(viewName) => setView(viewName)}
         isOpenManual={isCookieSettingsOpen}
         onCloseManual={() => setIsCookieSettingsOpen(false)}
       />
@@ -430,7 +429,7 @@ const App: React.FC = () => {
         <div className="fixed inset-0 z-[120] bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white dark:bg-slate-900 p-10 rounded-3xl w-full max-w-md relative shadow-2xl border border-slate-200 dark:border-slate-800">
             <button onClick={() => setIsAuthModalOpen(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 dark:hover:text-white"><X className="w-5 h-5" /></button>
-            
+
             <div className="text-center mb-8">
               <div className="bg-red-600 w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <FileText className="text-white w-6 h-6" />
@@ -447,7 +446,7 @@ const App: React.FC = () => {
 
               {/* Legal Consent Checkbox */}
               <div className="flex items-start gap-3 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                <button 
+                <button
                   onClick={() => setHasConsented(!hasConsented)}
                   className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 transition-all flex items-center justify-center
                     ${hasConsented ? 'bg-red-600 border-red-600' : 'border-slate-300 dark:border-slate-700'}`}
@@ -462,12 +461,12 @@ const App: React.FC = () => {
                 </p>
               </div>
 
-              <button 
-                onClick={handleAuth} 
+              <button
+                onClick={handleAuth}
                 disabled={!hasConsented}
                 className={`w-full py-4 rounded-2xl font-black text-sm transition-all shadow-lg
-                  ${hasConsented 
-                    ? 'bg-red-600 text-white hover:bg-red-700 shadow-red-900/20' 
+                  ${hasConsented
+                    ? 'bg-red-600 text-white hover:bg-red-700 shadow-red-900/20'
                     : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed shadow-none'}`}
               >
                 Create Account
