@@ -60,16 +60,34 @@ const ProcessingView = ({ tool, fileName, onClose }: { tool: string, fileName: s
   const [progress, setProgress] = useState(0);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userPlan, setUserPlan] = useState<string>('free');
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUserId(data.user?.id || null);
-    });
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+        const { data: profile } = await supabase.from('profiles').select('plan_type').eq('id', user.id).single();
+        if (profile) setUserPlan(profile.plan_type);
+      }
+    };
+    fetchUser();
   }, []);
 
   const startProcessing = async () => {
     if (!userId) {
       alert("Please sign in to use tools.");
+      return;
+    }
+
+    // Check Premium Tools
+    const premiumTools = ["ocr", "batch_convert", "large_file"];
+    // Map UI tool names to keys checking logic (simplification)
+    const normalizedTool = tool.toLowerCase();
+    const isPremium = premiumTools.some(pt => normalizedTool.includes(pt));
+
+    if (isPremium && userPlan === 'free') {
+      setShowUpgrade(true);
       return;
     }
 
