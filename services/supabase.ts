@@ -15,3 +15,43 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export { supabase };
+
+export async function canUserUseTool(userId: string): Promise<boolean> {
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("plan_type, credits_remaining")
+    .eq("id", userId)
+    .single();
+
+  if (error || !profile) {
+    console.error("Error checking user credits:", error);
+    return false;
+  }
+
+  // Allow pro users or users with credits
+  if (profile.plan_type === "pro") return true;
+  if ((profile.credits_remaining || 0) > 0) return true;
+
+  return false;
+}
+
+export async function deductCredit(userId: string, toolName: string, fileSize: number): Promise<void> {
+  // Log usage
+  const { error: logError } = await supabase.from("usage_logs").insert({
+    user_id: userId,
+    tool_name: toolName,
+    file_size_mb: fileSize
+  });
+
+  if (logError) {
+    console.error("Error logging usage:", logError);
+    // Don't return, still try to deduct credit
+  }
+
+  // Deduct credit
+  const { error: rpcError } = await supabase.rpc("decrement_credit", { uid: userId });
+
+  if (rpcError) {
+    console.error("Error deducting credit:", rpcError);
+  }
+}
