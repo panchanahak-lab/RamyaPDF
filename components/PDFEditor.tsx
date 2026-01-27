@@ -45,6 +45,7 @@ import {
   FilePlus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase, canUserUseTool, deductCredit } from '../services/supabase';
 
 
 interface PDFEditorProps {
@@ -57,8 +58,27 @@ const ProcessingView = ({ tool, fileName, onClose }: { tool: string, fileName: s
   const [isProcessing, setIsProcessing] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const startProcessing = () => {
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id || null);
+    });
+  }, []);
+
+  const startProcessing = async () => {
+    if (!userId) {
+      alert("Please sign in to use tools.");
+      return;
+    }
+
+    const allowed = await canUserUseTool(userId);
+    if (!allowed) {
+      setShowUpgrade(true);
+      return;
+    }
+
     setIsProcessing(true);
     let p = 0;
     const interval = setInterval(() => {
@@ -68,6 +88,8 @@ const ProcessingView = ({ tool, fileName, onClose }: { tool: string, fileName: s
         clearInterval(interval);
         setIsProcessing(false);
         setIsComplete(true);
+        // Deduct credit on completion (mock file size 2.5MB)
+        deductCredit(userId, tool, 2.5);
       }
       setProgress(p);
     }, 200);
@@ -97,64 +119,83 @@ const ProcessingView = ({ tool, fileName, onClose }: { tool: string, fileName: s
           <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2">{tool}</h2>
           <p className="text-slate-500 dark:text-slate-400 mb-8">Process <span className="font-bold text-slate-900 dark:text-white">{fileName}</span> securely in the cloud.</p>
 
-          {!isProcessing && !isComplete && (
-            <div className="space-y-6">
-              {tool.includes('Compress') && (
-                <div className="flex justify-center gap-4">
-                  {['Low', 'Medium', 'High'].map((level) => (
-                    <button key={level} className="px-6 py-4 border border-slate-200 dark:border-slate-700 rounded-2xl hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all group">
-                      <div className="font-bold text-slate-900 dark:text-white group-hover:text-red-600">{level}</div>
-                      <div className="text-xs text-slate-400">Compression</div>
-                    </button>
-                  ))}
+
+          {showUpgrade ? (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-red-50 dark:bg-red-900/10 border-2 border-red-100 dark:border-red-900/30 p-8 rounded-2xl">
+                <Sparkles className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Daily Limit Reached</h3>
+                <p className="text-slate-500 dark:text-slate-400 mb-6">You've used all your free credits for today. Upgrade to Pro for unlimited access.</p>
+                <button className="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white py-4 rounded-xl font-bold shadow-xl shadow-red-900/20 transition-all flex items-center justify-center gap-2">
+                  <Sparkles className="w-5 h-5" /> Upgrade to Pro
+                </button>
+              </div>
+              <button onClick={onClose} className="text-slate-400 font-bold hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                Maybe Later
+              </button>
+            </div>
+          ) : (
+            <>
+              {!isProcessing && !isComplete && (
+                <div className="space-y-6">
+                  {tool.includes('Compress') && (
+                    <div className="flex justify-center gap-4">
+                      {['Low', 'Medium', 'High'].map((level) => (
+                        <button key={level} className="px-6 py-4 border border-slate-200 dark:border-slate-700 rounded-2xl hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all group">
+                          <div className="font-bold text-slate-900 dark:text-white group-hover:text-red-600">{level}</div>
+                          <div className="text-xs text-slate-400">Compression</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {tool.includes('Merge') && (
+                    <div className="bg-slate-50 dark:bg-slate-800/50 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-8 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                      <div className="flex flex-col items-center gap-2 text-slate-400">
+                        <Plus className="w-8 h-8" />
+                        <span className="font-bold text-sm">Add more files to merge</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={startProcessing}
+                    className="bg-red-600 hover:bg-red-700 text-white px-12 py-4 rounded-xl font-bold text-lg shadow-xl shadow-red-900/20 transition-all w-full md:w-auto"
+                  >
+                    Start {tool}
+                  </button>
                 </div>
               )}
 
-              {tool.includes('Merge') && (
-                <div className="bg-slate-50 dark:bg-slate-800/50 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-8 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                  <div className="flex flex-col items-center gap-2 text-slate-400">
-                    <Plus className="w-8 h-8" />
-                    <span className="font-bold text-sm">Add more files to merge</span>
+              {isProcessing && (
+                <div className="max-w-md mx-auto space-y-4">
+                  <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-red-600"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <p className="text-sm font-bold text-slate-400 animate-pulse">Processing document...</p>
+                </div>
+              )}
+
+              {isComplete && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-center gap-2 text-green-500 font-bold bg-green-50 dark:bg-green-900/20 py-2 rounded-lg max-w-xs mx-auto">
+                    <CheckCircle2 className="w-5 h-5" />
+                    <span>Success!</span>
+                  </div>
+                  <div className="flex gap-4 justify-center">
+                    <button className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 transition-opacity">
+                      <Download className="w-4 h-4" /> Download File
+                    </button>
+                    <button onClick={() => { setIsProcessing(false); setIsComplete(false); }} className="px-8 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                      Start Over
+                    </button>
                   </div>
                 </div>
               )}
-
-              <button
-                onClick={startProcessing}
-                className="bg-red-600 hover:bg-red-700 text-white px-12 py-4 rounded-xl font-bold text-lg shadow-xl shadow-red-900/20 transition-all w-full md:w-auto"
-              >
-                Start {tool}
-              </button>
-            </div>
-          )}
-
-          {isProcessing && (
-            <div className="max-w-md mx-auto space-y-4">
-              <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-red-600"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-              <p className="text-sm font-bold text-slate-400 animate-pulse">Processing document...</p>
-            </div>
-          )}
-
-          {isComplete && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-center gap-2 text-green-500 font-bold bg-green-50 dark:bg-green-900/20 py-2 rounded-lg max-w-xs mx-auto">
-                <CheckCircle2 className="w-5 h-5" />
-                <span>Success!</span>
-              </div>
-              <div className="flex gap-4 justify-center">
-                <button className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 transition-opacity">
-                  <Download className="w-4 h-4" /> Download File
-                </button>
-                <button onClick={() => { setIsProcessing(false); setIsComplete(false); }} className="px-8 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                  Start Over
-                </button>
-              </div>
-            </div>
+            </>
           )}
         </div>
       </div>
@@ -444,7 +485,8 @@ const PDFEditor: React.FC<PDFEditorProps> = ({ fileName, tool, onClose }) => {
           </div>
         </div>
       </div>
-      );
+    </div>
+  );
 };
 
-      export default PDFEditor;
+export default PDFEditor;
