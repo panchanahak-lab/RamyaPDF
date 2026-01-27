@@ -2,11 +2,28 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
 // Fix: Initialized GoogleGenAI with named parameter as required by the coding guidelines
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Fix: Initialized GoogleGenAI with named parameter as required by the coding guidelines
+const getAiClient = () => {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || (window as any).process?.env?.API_KEY;
+
+  if (!apiKey || apiKey === 'undefined') {
+    console.error("Gemini API Key is missing. AI features will not work.");
+    // Return a dummy object to prevent immediate crash, methods will fail when called
+    return {
+      models: {
+        generateContent: async () => {
+          throw new Error("Gemini API Key is missing. Please set VITE_GEMINI_API_KEY.");
+        }
+      }
+    } as any;
+  }
+
+  return new GoogleGenAI({ apiKey });
+};
 
 export const performOCR = async (base64Image: string): Promise<string> => {
   try {
-    const response = await ai.models.generateContent({
+    const response = await getAiClient().models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: {
         parts: [
@@ -24,7 +41,7 @@ export const performOCR = async (base64Image: string): Promise<string> => {
 
 export const summarizePDF = async (text: string): Promise<string> => {
   try {
-    const response = await ai.models.generateContent({
+    const response = await getAiClient().models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Please summarize the following document content professionally: ${text.substring(0, 10000)}`
     });
@@ -37,7 +54,7 @@ export const summarizePDF = async (text: string): Promise<string> => {
 
 export const chatWithPDF = async (contextText: string, userQuestion: string): Promise<string> => {
   try {
-    const response = await ai.models.generateContent({
+    const response = await getAiClient().models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `You are a helpful PDF assistant. 
       
@@ -57,7 +74,7 @@ export const chatWithPDF = async (contextText: string, userQuestion: string): Pr
 
 export const detectFormFields = async (base64Image: string): Promise<any[]> => {
   try {
-    const response = await ai.models.generateContent({
+    const response = await getAiClient().models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: {
         parts: [

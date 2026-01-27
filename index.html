@@ -32,25 +32,6 @@
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
     rel="stylesheet">
-  <script>
-    // CRITICAL: Inline Error Handler for "Blank Page" debugging
-    // This runs before anything else. If the main bundle fails to load, this will catch it.
-    window.onerror = function(message, source, lineno, colno, error) {
-      var errorDiv = document.createElement('div');
-      errorDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100vh;background:white;color:red;padding:20px;z-index:99999;font-family:monospace;white-space:pre-wrap;overflow:auto;font-weight:bold;font-size:16px;';
-      errorDiv.innerHTML = '<h1>⚠️ Application Failed to Load</h1><hr/>' +
-        '<h3>Error: ' + message + '</h3>' +
-        '<p><strong>Source:</strong> ' + source + ':' + lineno + '</p>' +
-        '<pre style="background:#eee;padding:10px;border-radius:5px;color:black;">' + (error && error.stack ? error.stack : 'No stack trace') + '</pre>' + 
-        '<br/><p><em>Please take a screenshot of this screen and share it with the developer.</em></p>';
-      document.body.appendChild(errorDiv);
-      console.error("Global Error Caught:", error);
-    };
-    window.onunhandledrejection = function(event) {
-       // reuse the same handler logic or simple alert
-       console.error("Unhandled Rejection:", event.reason);
-    };
-  </script>
   <style>
     body {
       font-family: 'Inter', sans-serif;
