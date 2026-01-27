@@ -59,6 +59,7 @@ import {
   FilePlus
 } from 'lucide-react';
 import { User, UserFile } from './types';
+import { supabase } from './services/supabase';
 
 type AppView = 'home' | 'dashboard' | 'terms' | 'privacy' | 'disclaimer' | 'compliance';
 
@@ -134,7 +135,27 @@ const App: React.FC = () => {
       setActiveEditorFile(`Sample_${pendingTool.replace(/\s+/g, '_')}.pdf`);
       setPendingTool(null);
     }
+
   };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        const { data: profile } = await supabase.from('profiles').select('plan_type').eq('id', authUser.id).single();
+        if (profile) {
+          setUser({
+            id: authUser.id,
+            name: authUser.user_metadata.name || 'User',
+            email: authUser.email || '',
+            avatar: 'https://ui-avatars.com/api/?name=User',
+            plan: profile.plan_type as 'free' | 'pro'
+          });
+        }
+      }
+    };
+    fetchUser();
+  }, []);
 
   const dashboardFiles: UserFile[] = [
     { id: '1', name: 'Contract_Draft.pdf', size: '2.4 MB', uploadedAt: new Date(), type: 'pdf', status: 'ready' },
@@ -187,6 +208,8 @@ const App: React.FC = () => {
         { name: "Resize", icon: Scaling, color: "bg-pink-300", desc: "Change page dimensions." },
         { name: "Watermark", icon: Stamp, color: "bg-slate-500", desc: "Add logo or text stamp." },
         { name: "Bates Numbering", icon: Binary, color: "bg-pink-500", desc: "Index for legal docs." },
+        { name: "OCR PDF", icon: ScanText, color: "bg-orange-500", desc: "Recognize text in scans.", isPremium: true },
+        { name: "Merge", icon: Files, color: "bg-green-500", desc: "Combine multiple PDFs.", isPremium: true },
       ]
     }
   ];
@@ -273,6 +296,7 @@ const App: React.FC = () => {
                             color={tool.color}
                             onClick={() => handleToolClick(tool.name)}
                             isPremium={(tool as any).isPremium}
+                            isLocked={(tool as any).isPremium && user?.plan === 'free'}
                           />
                         ))}
                       </div>

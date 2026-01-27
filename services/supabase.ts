@@ -28,8 +28,8 @@ export async function canUserUseTool(userId: string): Promise<boolean> {
     return false;
   }
 
-  // Allow pro users or users with credits
-  if (profile.plan_type === "pro") return true;
+  // Allow pro or enterprise users
+  if (['pro', 'enterprise'].includes(profile.plan_type)) return true;
   if ((profile.credits_remaining || 0) > 0) return true;
 
   return false;
