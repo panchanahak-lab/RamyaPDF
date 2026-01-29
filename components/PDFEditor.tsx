@@ -124,6 +124,8 @@ const ProcessingView = ({ tool, fileName, onClose }: { tool: string, fileName: s
         alert("This tool is currently restricted.");
       } else if (message === 'VECTOR_REQUIRED') {
         alert("Scanned PDFs are not supported. Please upload a vector-based drawing PDF.");
+      } else if (message === 'UNSUPPORTED_BIN_FORMAT') {
+        alert("Unsupported BIN format. Only system-generated CAD BIN files are supported.");
       } else {
         alert("Error processing file: " + message);
       }

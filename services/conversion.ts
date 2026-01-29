@@ -1,5 +1,6 @@
 import { canUserUseTool, deductCredit, logConversionUsage } from './supabase';
 import { isVectorPDF } from '../utils/pdfUtils';
+import { validateBinFile } from '../utils/validation';
 import { CONVERSION_TOOLS } from '../constants/tools';
 
 interface ConversionRequest {
@@ -22,6 +23,11 @@ export async function executeConversion({
     if (!vectorOk) {
       throw new Error("VECTOR_REQUIRED");
     }
+  }
+
+  // 0.1 Pre-check: BIN File Validation
+  if (toolKey === 'bin_to_pdf') {
+    await validateBinFile(file);
   }
 
   // 1. Validate Access
