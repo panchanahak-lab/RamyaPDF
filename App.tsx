@@ -211,6 +211,16 @@ const App: React.FC = () => {
         { name: "OCR PDF", icon: ScanText, color: "bg-orange-500", desc: "Recognize text in scans.", isPremium: true },
         { name: "Merge", icon: Files, color: "bg-green-500", desc: "Combine multiple PDFs.", isPremium: true },
       ]
+    },
+    {
+      name: "CAD & Binary",
+      tools: [
+        { name: "DWG to PDF", icon: FileText, color: "bg-indigo-600", desc: "Convert CAD drawings.", isPremium: true },
+        { name: "PDF to DWG", icon: PenTool, color: "bg-indigo-500", desc: "Vectorize PDF to CAD.", isPremium: true },
+        { name: "CAD to PDF", icon: Image, color: "bg-indigo-400", desc: "DXF/DWT to PDF.", isPremium: true },
+        { name: "Bin to PDF", icon: Binary, color: "bg-slate-600", desc: "Binary data to PDF.", isPremium: true },
+        { name: "PDF to Bin", icon: Code, color: "bg-slate-700", desc: "PDF to binary format.", isPremium: true },
+      ]
     }
   ];
 

@@ -46,6 +46,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase, canUserUseTool, deductCredit } from '../services/supabase';
+import { isVectorPDF } from '../utils/pdfUtils';
+import { CONVERSION_TOOLS } from '../constants/tools';
 
 
 interface PDFEditorProps {
@@ -80,21 +82,41 @@ const ProcessingView = ({ tool, fileName, onClose }: { tool: string, fileName: s
       return;
     }
 
-    // Check Premium Tools
-    const premiumTools = ["ocr", "batch_convert", "large_file"];
-    // Map UI tool names to keys checking logic (simplification)
-    const normalizedTool = tool.toLowerCase();
-    const isPremium = premiumTools.some(pt => normalizedTool.includes(pt));
+    const result = await canUserUseTool(userId, tool);
 
-    if (isPremium && userPlan === 'free') {
+    if (!result.allowed) {
+      if (result.reason === 'ENTERPRISE_REQUIRED') {
+        alert("This tool requires an Enterprise plan. Please contact sales.");
+        return;
+      }
+      if (result.reason === 'RESTRICTED') {
+        alert("This tool is currently restricted.");
+        return;
+      }
+      // For PLAN_REQUIRED or NO_CREDITS, show the upgrade modal
       setShowUpgrade(true);
       return;
     }
 
-    const allowed = await canUserUseTool(userId);
-    if (!allowed) {
-      setShowUpgrade(true);
-      return;
+    // Check for Vector PDF requirement
+    // Need a dummy file object since we don't have the actual file ref in this mock view
+    // In real app, we would pass the actual File object here.
+    // For demo, we create a dummy file with the name.
+    const dummyFile = new File([""], fileName, { type: "application/pdf" });
+
+    // Normalize tool name for config lookup
+    const toolKey = tool.toLowerCase().replace(/\s+/g, '_');
+    const config = CONVERSION_TOOLS[toolKey]; // Need to import this or pass it
+
+    if (config?.vector_only) {
+      setIsProcessing(true); // Show processing while checking
+      const isVector = await isVectorPDF(dummyFile);
+      setIsProcessing(false);
+
+      if (!isVector) {
+        alert("This tool requires a vector PDF. Scanned files are not supported.");
+        return;
+      }
     }
 
     setIsProcessing(true);

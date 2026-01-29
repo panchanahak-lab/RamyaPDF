@@ -16,7 +16,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export { supabase };
 
-export async function canUserUseTool(userId: string): Promise<boolean> {
+import { CONVERSION_TOOLS } from '../constants/tools';
+
+export async function canUserUseTool(userId: string, toolName: string): Promise<boolean> {
   const { data: profile, error } = await supabase
     .from("profiles")
     .select("plan_type, credits_remaining")
@@ -28,8 +30,21 @@ export async function canUserUseTool(userId: string): Promise<boolean> {
     return false;
   }
 
-  // Allow pro or enterprise users
+  // Normalize tool name to match config keys (e.g. "DWG to PDF" -> "dwg_to_pdf")
+  const toolKey = toolName.toLowerCase().replace(/\s+/g, '_');
+  const toolConfig = CONVERSION_TOOLS[toolKey];
+
+  // 1. Check strict plan requirements from config
+  if (toolConfig) {
+    if (toolConfig.plan_required === 'enterprise' && profile.plan_type !== 'enterprise') return false;
+    if (toolConfig.plan_required === 'pro' && !['pro', 'enterprise'].includes(profile.plan_type)) return false;
+    // If restricted, even pro might need checks, but for now we follow plan_required
+  }
+
+  // 2. Base Plan Limits (Pro/Enterprise usually unlimited)
   if (['pro', 'enterprise'].includes(profile.plan_type)) return true;
+
+  // 3. Free User Credit Check
   if ((profile.credits_remaining || 0) > 0) return true;
 
   return false;
