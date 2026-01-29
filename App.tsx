@@ -60,6 +60,7 @@ import {
 } from 'lucide-react';
 import { User, UserFile } from './types';
 import { supabase } from './services/supabase';
+import { getToolBadge } from './utils/toolUtils';
 
 type AppView = 'home' | 'dashboard' | 'terms' | 'privacy' | 'disclaimer' | 'compliance';
 
@@ -297,18 +298,23 @@ const App: React.FC = () => {
                         <div className="h-px bg-slate-100 dark:bg-slate-800 flex-1"></div>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                        {category.tools.map((tool) => (
-                          <ToolCard
-                            key={tool.name}
-                            title={tool.name}
-                            description={tool.desc}
-                            icon={tool.icon}
-                            color={tool.color}
-                            onClick={() => handleToolClick(tool.name)}
-                            isPremium={(tool as any).isPremium}
-                            isLocked={(tool as any).isPremium && user?.plan === 'free'}
-                          />
-                        ))}
+                        {category.tools.map((tool) => {
+                          // Calculate badge dynamically
+                          const badge = getToolBadge(tool.name);
+
+                          return (
+                            <ToolCard
+                              key={tool.name}
+                              title={tool.name}
+                              description={tool.desc}
+                              icon={tool.icon}
+                              color={tool.color}
+                              onClick={() => handleToolClick(tool.name)}
+                              badge={badge}
+                              isLocked={!!badge && badge !== 'free' && user?.plan === 'free'} // Simple lock logic based on badge presence
+                            />
+                          );
+                        })}
                       </div>
                     </div>
                   ))}

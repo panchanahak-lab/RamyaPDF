@@ -9,11 +9,11 @@ interface ToolCardProps {
   icon: LucideIcon;
   color: string;
   onClick: () => void;
-  isPremium?: boolean;
   isLocked?: boolean;
+  badge?: string | null;
 }
 
-const ToolCard: React.FC<ToolCardProps> = ({ title, description, icon: Icon, color, onClick, isPremium, isLocked }) => {
+const ToolCard: React.FC<ToolCardProps> = ({ title, description, icon: Icon, color, onClick, badge, isLocked }) => {
   return (
     <motion.div
       whileHover={{ y: -3, scale: 1.01 }}
@@ -34,9 +34,9 @@ const ToolCard: React.FC<ToolCardProps> = ({ title, description, icon: Icon, col
         </p>
       </div>
 
-      {isPremium && !isLocked && (
-        <span className="absolute top-2 right-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter">
-          PRO
+      {badge && !isLocked && (
+        <span className={`absolute top-2 right-2 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter ${badge === 'ENTERPRISE' ? 'bg-slate-800 text-white dark:bg-slate-700' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'}`}>
+          {badge}
         </span>
       )}
     </motion.div>

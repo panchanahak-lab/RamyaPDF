@@ -49,6 +49,7 @@ import { supabase, canUserUseTool, deductCredit } from '../services/supabase';
 import { executeConversion } from '../services/conversion';
 import { isVectorPDF } from '../utils/pdfUtils';
 import { CONVERSION_TOOLS } from '../constants/tools';
+import { getToolBadge } from '../utils/toolUtils';
 
 
 interface PDFEditorProps {
@@ -324,6 +325,17 @@ const PDFEditor: React.FC<PDFEditorProps> = ({ fileName, tool, onClose }) => {
               <span className="text-[10px] text-red-500 font-black uppercase tracking-widest flex items-center gap-1">
                 {tool} Workspace
               </span>
+              {(() => {
+                const badge = getToolBadge(tool);
+                if (badge) {
+                  return (
+                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter ${badge === 'ENTERPRISE' ? 'bg-slate-800 text-white dark:bg-slate-700' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30'}`}>
+                      {badge}
+                    </span>
+                  );
+                }
+                return null;
+              })()}
               <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1 ml-2">
                 <Cloud className="w-3 h-3" /> Saved to Cloud
               </span>
