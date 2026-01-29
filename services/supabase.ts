@@ -18,7 +18,7 @@ export { supabase };
 
 import { CONVERSION_TOOLS } from '../constants/tools';
 
-export async function canUserUseTool(userId: string, toolName: string): Promise<boolean> {
+export async function canUserUseTool(userId: string, toolName: string): Promise<{ allowed: boolean; reason?: 'PLAN_REQUIRED' | 'NO_CREDITS' | 'ENTERPRISE_REQUIRED' | 'RESTRICTED' | null }> {
   const { data: profile, error } = await supabase
     .from("profiles")
     .select("plan_type, credits_remaining")
@@ -27,7 +27,7 @@ export async function canUserUseTool(userId: string, toolName: string): Promise<
 
   if (error || !profile) {
     console.error("Error checking user credits:", error);
-    return false;
+    return { allowed: false, reason: null };
   }
 
   // Normalize tool name to match config keys (e.g. "DWG to PDF" -> "dwg_to_pdf")
@@ -36,18 +36,26 @@ export async function canUserUseTool(userId: string, toolName: string): Promise<
 
   // 1. Check strict plan requirements from config
   if (toolConfig) {
-    if (toolConfig.plan_required === 'enterprise' && profile.plan_type !== 'enterprise') return false;
-    if (toolConfig.plan_required === 'pro' && !['pro', 'enterprise'].includes(profile.plan_type)) return false;
+    if (toolConfig.plan_required === 'enterprise' && profile.plan_type !== 'enterprise') {
+      return { allowed: false, reason: 'ENTERPRISE_REQUIRED' };
+    }
+    if (toolConfig.plan_required === 'pro' && !['pro', 'enterprise'].includes(profile.plan_type)) {
+      return { allowed: false, reason: 'PLAN_REQUIRED' };
+    }
     // If restricted, even pro might need checks, but for now we follow plan_required
   }
 
   // 2. Base Plan Limits (Pro/Enterprise usually unlimited)
-  if (['pro', 'enterprise'].includes(profile.plan_type)) return true;
+  if (['pro', 'enterprise'].includes(profile.plan_type)) {
+    return { allowed: true };
+  }
 
   // 3. Free User Credit Check
-  if ((profile.credits_remaining || 0) > 0) return true;
+  if ((profile.credits_remaining || 0) > 0) {
+    return { allowed: true };
+  }
 
-  return false;
+  return { allowed: false, reason: 'NO_CREDITS' };
 }
 
 export async function deductCredit(userId: string, toolName: string, fileSize: number): Promise<void> {

@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase, canUserUseTool, deductCredit } from '../services/supabase';
+import { executeConversion } from '../services/conversion';
 import { isVectorPDF } from '../utils/pdfUtils';
 import { CONVERSION_TOOLS } from '../constants/tools';
 
@@ -82,23 +83,9 @@ const ProcessingView = ({ tool, fileName, onClose }: { tool: string, fileName: s
       return;
     }
 
-    const result = await canUserUseTool(userId, tool);
+    // Access check is now handled in executeConversion
+    // Access check and vector validation are now handled in executeConversion
 
-    if (!result.allowed) {
-      if (result.reason === 'ENTERPRISE_REQUIRED') {
-        alert("This tool requires an Enterprise plan. Please contact sales.");
-        return;
-      }
-      if (result.reason === 'RESTRICTED') {
-        alert("This tool is currently restricted.");
-        return;
-      }
-      // For PLAN_REQUIRED or NO_CREDITS, show the upgrade modal
-      setShowUpgrade(true);
-      return;
-    }
-
-    // Check for Vector PDF requirement
     // Need a dummy file object since we don't have the actual file ref in this mock view
     // In real app, we would pass the actual File object here.
     // For demo, we create a dummy file with the name.
@@ -106,33 +93,38 @@ const ProcessingView = ({ tool, fileName, onClose }: { tool: string, fileName: s
 
     // Normalize tool name for config lookup
     const toolKey = tool.toLowerCase().replace(/\s+/g, '_');
-    const config = CONVERSION_TOOLS[toolKey]; // Need to import this or pass it
+    // const config = CONVERSION_TOOLS[toolKey]; // Removed direct config check
 
-    if (config?.vector_only) {
-      setIsProcessing(true); // Show processing while checking
-      const isVector = await isVectorPDF(dummyFile);
+    // Removed duplicate vector usage check block
+
+
+    try {
+      setIsProcessing(true);
+      await executeConversion({
+        user: { id: userId, plan_type: userPlan },
+        toolKey: toolKey,
+        file: dummyFile,
+        fileSizeMB: 2.5 // Mock size
+      });
+      setIsProcessing(false);
+      setIsComplete(true);
+    } catch (err: any) {
       setIsProcessing(false);
 
-      if (!isVector) {
-        alert("This tool requires a vector PDF. Scanned files are not supported.");
-        return;
+      const message = err.message || '';
+
+      if (['PLAN_REQUIRED', 'NO_CREDITS'].includes(message)) {
+        setShowUpgrade(true);
+      } else if (message === 'ENTERPRISE_REQUIRED') {
+        alert("This tool requires an Enterprise plan. Please contact sales.");
+      } else if (message === 'RESTRICTED') {
+        alert("This tool is currently restricted.");
+      } else if (message === 'VECTOR_REQUIRED') {
+        alert("Scanned PDFs are not supported. Please upload a vector-based drawing PDF.");
+      } else {
+        alert("Error processing file: " + message);
       }
     }
-
-    setIsProcessing(true);
-    let p = 0;
-    const interval = setInterval(() => {
-      p += Math.random() * 10;
-      if (p >= 100) {
-        p = 100;
-        clearInterval(interval);
-        setIsProcessing(false);
-        setIsComplete(true);
-        // Deduct credit on completion (mock file size 2.5MB)
-        deductCredit(userId, tool, 2.5);
-      }
-      setProgress(p);
-    }, 200);
   };
 
   const getToolIcon = () => {
