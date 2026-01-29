@@ -117,26 +117,24 @@ const App: React.FC = () => {
     setActiveTool(null);
   };
 
-  const handleAuth = () => {
-    // In a real app, validation would occur here.
-    // For demo purposes, we proceed if manual consent is checked or if coming from social buttons (implicit)
-
-    setUser({
-      id: '1',
-      name: 'Sarah Connor',
-      email: 'sarah@example.com',
-      avatar: 'https://picsum.photos/100/100?random=10',
-      plan: 'free'
-    });
-    setIsAuthModalOpen(false);
-
-    // Redirect to the tool the user originally tried to access
-    if (pendingTool) {
-      setActiveTool(pendingTool);
-      setActiveEditorFile(`Sample_${pendingTool.replace(/\s+/g, '_')}.pdf`);
-      setPendingTool(null);
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}`,
+        },
+      });
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error logging in with Google:", error);
+      alert("Failed to login with Google. Please try again.");
     }
+  };
 
+  const handleAuth = () => {
+    // Used for 'Create Account' button which might default to Google for now
+    handleGoogleLogin();
   };
 
   useEffect(() => {
@@ -144,15 +142,14 @@ const App: React.FC = () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser) {
         const { data: profile } = await supabase.from('profiles').select('plan_type').eq('id', authUser.id).single();
-        if (profile) {
-          setUser({
-            id: authUser.id,
-            name: authUser.user_metadata.name || 'User',
-            email: authUser.email || '',
-            avatar: 'https://ui-avatars.com/api/?name=User',
-            plan: profile.plan_type as 'free' | 'pro'
-          });
-        }
+
+        setUser({
+          id: authUser.id,
+          name: authUser.user_metadata.name || authUser.user_metadata.full_name || 'User',
+          email: authUser.email || '',
+          avatar: authUser.user_metadata.avatar_url || authUser.user_metadata.picture || 'https://ui-avatars.com/api/?name=User',
+          plan: (profile?.plan_type as 'free' | 'pro' | 'enterprise') || 'free'
+        });
       }
     };
     fetchUser();
@@ -502,7 +499,7 @@ const App: React.FC = () => {
               </div>
 
               <button
-                onClick={handleAuth}
+                onClick={handleGoogleLogin}
                 disabled={!hasConsented}
                 className={`w-full py-4 rounded-2xl font-black text-sm transition-all shadow-lg
                   ${hasConsented
@@ -518,7 +515,7 @@ const App: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-3">
-                <button onClick={handleAuth} className="p-3 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 text-[12px] font-bold w-full">
+                <button onClick={handleGoogleLogin} className="p-3 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 text-[12px] font-bold w-full">
                   <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
