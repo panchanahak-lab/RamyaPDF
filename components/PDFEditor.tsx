@@ -61,6 +61,7 @@ const ProcessingView = ({ tool, fileName, onClose }: { tool: string, fileName: s
   const [isProcessing, setIsProcessing] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [userPlan, setUserPlan] = useState<string>('free');
@@ -100,12 +101,14 @@ const ProcessingView = ({ tool, fileName, onClose }: { tool: string, fileName: s
 
     try {
       setIsProcessing(true);
-      await executeConversion({
+      const blob = await executeConversion({
         user: { id: userId, plan_type: userPlan },
         toolKey: toolKey,
         file: dummyFile,
         fileSizeMB: 2.5 // Mock size
       });
+      const url = URL.createObjectURL(blob);
+      setDownloadUrl(url);
       setIsProcessing(false);
       setIsComplete(true);
     } catch (err: any) {
@@ -218,10 +221,14 @@ const ProcessingView = ({ tool, fileName, onClose }: { tool: string, fileName: s
                     <span>Success!</span>
                   </div>
                   <div className="flex gap-4 justify-center">
-                    <button className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 transition-opacity">
+                    <a
+                      href={downloadUrl || '#'}
+                      download={`converted_${fileName}`} // Simple filename handling
+                      className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 transition-opacity"
+                    >
                       <Download className="w-4 h-4" /> Download File
-                    </button>
-                    <button onClick={() => { setIsProcessing(false); setIsComplete(false); }} className="px-8 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    </a>
+                    <button onClick={() => { setIsProcessing(false); setIsComplete(false); setDownloadUrl(null); }} className="px-8 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                       Start Over
                     </button>
                   </div>

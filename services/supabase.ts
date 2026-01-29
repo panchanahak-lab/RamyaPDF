@@ -58,18 +58,32 @@ export async function canUserUseTool(userId: string, toolName: string): Promise<
   return { allowed: false, reason: 'NO_CREDITS' };
 }
 
-export async function deductCredit(userId: string, toolName: string, fileSize: number): Promise<void> {
-  // Log usage
+export async function logConversionUsage(
+  userId: string,
+  toolName: string,
+  fileSize: number,
+  meta: {
+    input_format?: string;
+    output_format?: string;
+    conversion_type?: string;
+  }
+): Promise<void> {
   const { error: logError } = await supabase.from("usage_logs").insert({
     user_id: userId,
     tool_name: toolName,
-    file_size_mb: fileSize
+    file_size_mb: fileSize,
+    input_format: meta.input_format,
+    output_format: meta.output_format,
+    conversion_type: meta.conversion_type
   });
 
   if (logError) {
     console.error("Error logging usage:", logError);
-    // Don't return, still try to deduct credit
   }
+}
+
+export async function deductCredit(userId: string, toolName: string, fileSize: number): Promise<void> {
+  // Usage logging is now handled by logConversionUsage
 
   // Deduct credit
   const { error: rpcError } = await supabase.rpc("decrement_credit", { uid: userId });

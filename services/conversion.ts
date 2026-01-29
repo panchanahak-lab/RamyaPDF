@@ -1,5 +1,6 @@
-import { canUserUseTool, deductCredit } from './supabase';
+import { canUserUseTool, deductCredit, logConversionUsage } from './supabase';
 import { isVectorPDF } from '../utils/pdfUtils';
+import { CONVERSION_TOOLS } from '../constants/tools';
 
 interface ConversionRequest {
   user: { id: string; plan_type: string };
@@ -13,7 +14,7 @@ export async function executeConversion({
   toolKey,
   file,
   fileSizeMB
-}: ConversionRequest): Promise<void> {
+}: ConversionRequest): Promise<Blob> {
 
   // 0. Pre-check: Vector PDF Requirement
   if (toolKey === 'pdf_to_dwg') {
@@ -37,26 +38,33 @@ export async function executeConversion({
     await deductCredit(user.id, toolKey, fileSizeMB);
   }
 
-  // 3. Execute Backend Job
-  // Mocking the API call for now since we don't have a real backend endpoint active for this demo
+  // 3. Log Usage (for all users)
+  // Retrieve tool config for metadata
+  // toolKey is already normalized in PDFEditor, so we can use it directly? 
+  // Wait, executeConversion receives toolKey. Let's assume it matches keys in CONVERSION_TOOLS.
+  const config = CONVERSION_TOOLS[toolKey];
+
+  await logConversionUsage(user.id, toolKey, fileSizeMB, {
+    input_format: file.name.split('.').pop()?.toLowerCase(), // simple extension extraction
+    output_format: config?.output,
+    conversion_type: config?.category
+  });
+
+  // 4. Execute Backend Job
   console.log(`Executing conversion for ${toolKey} on file ${file.name} (${fileSizeMB}MB)`);
 
-  /* 
+  const formData = new FormData();
+  formData.append('tool', toolKey);
+  formData.append('file', file);
+
   const response = await fetch("/api/convert", {
     method: "POST",
-    body: JSON.stringify({
-      tool: toolKey,
-      file // In real usage, this would likely be a multipart form upload or signed URL
-    })
+    body: formData,
   });
- 
+
   if (!response.ok) {
     throw new Error("Conversion failed");
   }
- 
-  return await response.blob(); 
-  */
 
-  // Mock delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  return await response.blob();
 }
